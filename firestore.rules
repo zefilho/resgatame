@@ -1,0 +1,13 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Esta regra permite acesso de leitura e escrita a todos os documentos
+    // no Firestore. É útil para o desenvolvimento inicial, mas
+    // DEVE ser substituída por regras mais seguras antes da produção.
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

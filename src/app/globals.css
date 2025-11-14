@@ -1,0 +1,112 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: 35 30% 88%; /* Softer Beige: #EBE5D9 */
+    --foreground: 30 45% 20%; /* Darker Brown: #4D3822 */
+
+    --card: 35 30% 94%; /* Lighter Beige/Off-white: #F3EFEA */
+    --card-foreground: 30 45% 20%; /* Darker Brown */
+
+    --popover: 35 30% 94%; /* Lighter Beige/Off-white */
+    --popover-foreground: 30 45% 20%; /* Darker Brown */
+
+    --primary: 30 60% 30%; /* Darker Rich Brown: #7A5229 */
+    --primary-foreground: 35 30% 90%; /* Light Beige for text on primary: #EDEAE6 */
+
+    --secondary: 30 35% 70%; /* Muted Medium Brown: #C9B8A5 */
+    --secondary-foreground: 30 45% 20%; /* Darker Brown */
+
+    --muted: 30 25% 80%; /* Lighter muted brown/darker beige: #D9CEC6 */
+    --muted-foreground: 30 35% 40%; /* Softer brown for muted text: #8A7A69 */
+
+    --accent: 25 40% 40%; /* Earthy Dark Brown/Olive: #7D6648 */
+    --accent-foreground: 35 30% 90%; /* Light Beige for text on accent: #EDEAE6 */
+
+    --destructive: 0 72.2% 50.6%; /* Adjusted for better visibility with new theme */
+    --destructive-foreground: 0 0% 98%; /* White */
+
+    --border: 30 30% 65%; /* Brownish Border: #BFAB99 */
+    --input: 30 30% 75%; /* Lighter Brownish for input bg: #D2C4B6 */
+    --ring: 30 60% 30%; /* Primary color for rings: #7A5229 */
+
+    --chart-1: 30 60% 40%; /* Shades of primary/accent for charts */
+    --chart-2: 25 40% 50%;
+    --chart-3: 30 50% 50%;
+    --chart-4: 25 30% 60%;
+    --chart-5: 30 40% 60%;
+    --radius: 0.5rem;
+
+    /* Sidebar specific theme */
+    --sidebar-background: 21 35% 39%; /* New Brown for Sidebar: #875740 */
+    --sidebar-foreground: 35 30% 90%; /* Light Beige for Sidebar text: #EDEAE6 */
+    --sidebar-primary: 25 40% 25%; /* Darker accent for Sidebar active/hover: #594833 */
+    --sidebar-primary-foreground: 35 30% 92%; /* Very Light Beige for text on active/hover: #F0EDE9 */
+    --sidebar-accent: 25 35% 32%; /* Lighter brown for hover: #6B5A46 */
+    --sidebar-accent-foreground: 35 30% 92%; /* Very Light Beige */
+    --sidebar-border: 21 35% 30%; /* Darker version of sidebar bg for border: #694532 */
+    --sidebar-ring: 25 40% 45%; /* Earthy Brown for ring */
+  }
+
+  .dark {
+    --background: 30 25% 12%; /* Very Dark Brown: #29231D */
+    --foreground: 35 20% 75%; /* Muted Light Beige: #C9C4BD */
+
+    --card: 30 25% 18%; /* Dark Brown Card: #3B332B */
+    --card-foreground: 35 20% 75%; /* Muted Light Beige */
+
+    --popover: 30 25% 18%; /* Dark Brown Popover */
+    --popover-foreground: 35 20% 75%; /* Muted Light Beige */
+
+    --primary: 30 50% 55%; /* Medium-Dark Warm Brown: #B88A5C */
+    --primary-foreground: 30 25% 15%; /* Dark Brown text on primary: #332B24 */
+
+    --secondary: 30 20% 30%; /* Darker Muted Brown: #5C544D */
+    --secondary-foreground: 35 20% 75%; /* Muted Light Beige */
+
+    --muted: 30 20% 25%; /* Slightly lighter dark muted brown: #4D463F */
+    --muted-foreground: 35 20% 60%; /* Softer beige for muted text: #A8A39D */
+
+    --accent: 25 35% 50%; /* Muted Earthy Brown/Olive: #A4886A */
+    --accent-foreground: 30 25% 15%; /* Dark Brown text on accent: #332B24 */
+
+    --destructive: 0 62.8% 30.6%; /* Dark mode destructive */
+    --destructive-foreground: 0 0% 98%; /* White */
+
+    --border: 30 20% 35%; /* Dark Brownish Border: #6B6259 */
+    --input: 30 20% 28%; /* Darker Brownish for input bg: #544C44 */
+    --ring: 30 50% 55%; /* Primary color for rings: #B88A5C */
+
+    --chart-1: 30 50% 65%;
+    --chart-2: 25 35% 60%;
+    --chart-3: 30 40% 60%;
+    --chart-4: 25 25% 70%;
+    --chart-5: 30 30% 70%;
+
+    /* Dark Sidebar specific theme */
+    --sidebar-background: 21 35% 39%; /* New Brown for Sidebar: #875740 */
+    --sidebar-foreground: 35 30% 90%; /* Light Beige for Sidebar text: #EDEAE6 */
+    --sidebar-primary: 25 40% 25%; /* Darker accent for Sidebar active/hover: #594833 */
+    --sidebar-primary-foreground: 35 30% 92%; /* Very Light Beige for text on active/hover: #F0EDE9 */
+    --sidebar-accent: 25 35% 32%; /* Lighter brown for hover: #6B5A46 */
+    --sidebar-accent-foreground: 35 30% 92%; /* Very Light Beige */
+    --sidebar-border: 21 35% 30%; /* Darker version of sidebar bg for border: #694532 */
+    --sidebar-ring: 25 40% 45%; /* Earthy Brown for ring */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
