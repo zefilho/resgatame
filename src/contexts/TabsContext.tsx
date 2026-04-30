@@ -1,7 +1,7 @@
 "use client";
 
-import type { CustomerTab, OrderItem, MenuItem } from '@/types';
-import { ConcreteCustomerTab, ConcreteOrderItem } from '@/types';
+import type { Annotation as CustomerTab, OrderItem, MenuItem } from '@/types';
+import { ConcreteAnnotation as ConcreteCustomerTab, ConcreteOrderItem } from '@/types';
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useSales } from './SalesContext'; // Assuming SalesContext exists for recording transactions
 
@@ -58,7 +58,7 @@ export const TabsProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addTransaction({
         items: tabToClose.items,
         totalAmount: tabToClose.totalAmount,
-        tabId: tabToClose.id,
+        annotationId: tabToClose.id,
         paymentMethod: paymentMethod,
       });
       setTabs(prevTabs =>

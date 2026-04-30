@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { CreateTabDialog } from '@/components/tabs/CreateTabDialog';
 import { AddItemToTabDialog } from '@/components/tabs/AddItemToTabDialog';
 import { useTabs } from '@/contexts/TabsContext';
-import type { CustomerTab } from '@/types';
+import type { Annotation as CustomerTab } from '@/types';
 import { PlusIcon, XCircleIcon, DollarSignIcon, CheckCircleIcon, PencilIcon } from 'lucide-react';
 import {
   AlertDialog,
@@ -69,7 +69,7 @@ export default function TabsManagementPage() {
                       {tab.status === 'open' ? 'Aberta' : tab.status === 'paid' ? 'Paga' : 'Fechada'}
                     </span>
                   </CardTitle>
-                  <CardDescription>Criada em: {new Date(tab.createdAt).toLocaleDateString('pt-BR')}</CardDescription>
+                  <CardDescription>Criada em: {(tab.createdAt instanceof Date ? tab.createdAt : (tab.createdAt as any).toDate?.() || new Date(tab.createdAt as any)).toLocaleDateString('pt-BR')}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <ScrollArea className="h-32">
@@ -150,7 +150,7 @@ export default function TabsManagementPage() {
                       {tab.status === 'paid' ? 'Paga' : 'Fechada'}
                     </span>
                   </CardTitle>
-                  <CardDescription className="text-xs">Fechada em: {new Date(tab.createdAt).toLocaleDateString('pt-BR')} - Total: {tab.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</CardDescription>
+                  <CardDescription className="text-xs">Fechada em: {(tab.createdAt instanceof Date ? tab.createdAt : (tab.createdAt as any).toDate?.() || new Date(tab.createdAt as any)).toLocaleDateString('pt-BR')} - Total: {tab.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</CardDescription>
                 </CardHeader>
               </Card>
             ))}

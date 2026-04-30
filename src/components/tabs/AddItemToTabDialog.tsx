@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { useTabs } from '@/contexts/TabsContext';
 import { useMenu } from '@/contexts/MenuContext';
-import type { CustomerTab, MenuItem } from '@/types';
+import type { Annotation as CustomerTab, MenuItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
 interface AddItemToTabDialogProps {

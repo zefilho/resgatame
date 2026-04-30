@@ -125,7 +125,7 @@ export default function AnnotationsManagementPage() {
                         {annotation.status === 'open' ? 'Aberta' : annotation.status === 'paid' ? 'Paga' : 'Fechada'}
                       </span>
                     </CardTitle>
-                    <CardDescription>Criada em: {new Date(annotation.createdAt).toLocaleDateString('pt-BR')}</CardDescription>
+                    <CardDescription>Criada em: {(annotation.createdAt instanceof Date ? annotation.createdAt : (annotation.createdAt as any).toDate?.() || new Date(annotation.createdAt as any)).toLocaleDateString('pt-BR')}</CardDescription>
                   </CardHeader>
                   <CardContent className="flex-grow">
                     <ScrollArea className="h-32">
@@ -247,7 +247,7 @@ export default function AnnotationsManagementPage() {
                       {annotation.status === 'paid' ? 'Paga' : 'Fechada'}
                     </span>
                   </CardTitle>
-                  <CardDescription className="text-xs">Fechada em: {new Date(annotation.closedAt || annotation.createdAt).toLocaleDateString('pt-BR')} - Total: {annotation.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</CardDescription>
+                  <CardDescription className="text-xs">Fechada em: {((annotation.closedAt || annotation.createdAt) instanceof Date ? (annotation.closedAt || annotation.createdAt) : ((annotation.closedAt || annotation.createdAt) as any).toDate?.() || new Date((annotation.closedAt || annotation.createdAt) as any)).toLocaleDateString('pt-BR')} - Total: {annotation.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</CardDescription>
                 </CardHeader>
               </Card>
             ))}

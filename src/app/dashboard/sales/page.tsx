@@ -112,7 +112,7 @@ export default function SalesLogPage() {
                     return (
                       <TableRow key={txn.id}>
                         <TableCell className="font-mono text-xs">{txn.id.substring(0, 8)}...</TableCell>
-                        <TableCell>{new Date(txn.timestamp).toLocaleString('pt-BR')}</TableCell>
+                        <TableCell>{(txn.timestamp instanceof Date ? txn.timestamp : (txn.timestamp as any).toDate?.() || new Date(txn.timestamp as any)).toLocaleString('pt-BR')}</TableCell>
                         <TableCell className="text-center">{txn.items.length}</TableCell>
                         <TableCell>
                           <Badge variant={txn.paymentMethod === 'Dinheiro' ? 'secondary' : 'outline'}>
@@ -172,7 +172,7 @@ export default function SalesLogPage() {
             <div className="space-y-4">
                <div>
                 <h4 className="font-semibold text-sm mb-2">Resumo</h4>
-                <p className="text-sm"><strong>Data:</strong> {new Date(selectedTxn.timestamp).toLocaleString('pt-BR')}</p>
+                <p className="text-sm"><strong>Data:</strong> {(selectedTxn.timestamp instanceof Date ? selectedTxn.timestamp : (selectedTxn.timestamp as any).toDate?.() || new Date(selectedTxn.timestamp as any)).toLocaleString('pt-BR')}</p>
                 <p className="text-sm"><strong>Origem:</strong> {selectedTxn.annotationId ? getAnnotationById(selectedTxn.annotationId)?.name : 'Venda Direta'}</p>
                 <p className="text-sm"><strong>Pagamento:</strong> {selectedTxn.paymentMethod}</p>
                 <p className="text-sm font-bold"><strong>Total:</strong> {selectedTxn.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>

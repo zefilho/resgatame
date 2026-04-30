@@ -102,7 +102,7 @@ export const SalesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       startDate.setDate(startDate.getDate() - 19);
     }
 
-    return transactions.filter(txn => new Date(txn.timestamp) >= startDate);
+    return transactions.filter(txn => (txn.timestamp instanceof Date ? txn.timestamp : (txn.timestamp as any).toDate?.() || new Date(txn.timestamp as any)) >= startDate);
   }, [transactions]);
   
   const getStatsForPeriod = useCallback((period: Period): SalesStats => {
@@ -157,7 +157,7 @@ export const SalesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const getDailyFinancialSummary = useCallback((): DailyFinancialSummary => {
     const summary: DailyFinancialSummary = {};
     transactions.forEach(txn => {
-      const date = new Date(txn.timestamp).toLocaleDateString('pt-BR');
+      const date = (txn.timestamp instanceof Date ? txn.timestamp : (txn.timestamp as any).toDate?.() || new Date(txn.timestamp as any)).toLocaleDateString('pt-BR');
       const method = txn.paymentMethod || 'Não definido';
       const amount = txn.totalAmount;
 

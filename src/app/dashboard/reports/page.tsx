@@ -83,7 +83,7 @@ export default function ReportsPage() {
         id_anotacao: annotation.id,
         nome: annotation.name,
         telefone: customer?.phone || 'N/A',
-        data_criacao: new Date(annotation.createdAt).toLocaleString('pt-BR'),
+        data_criacao: (annotation.createdAt instanceof Date ? annotation.createdAt : (annotation.createdAt as any).toDate?.() || new Date(annotation.createdAt as any)).toLocaleString('pt-BR'),
         total_itens: annotation.items.reduce((sum, i) => sum + i.quantity, 0),
         valor_total: annotation.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
         itens_consumidos: annotation.items.map(i => `${i.quantity}x ${i.menuItem.name}`).join(', '),

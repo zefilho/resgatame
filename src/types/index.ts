@@ -42,8 +42,8 @@ export interface Annotation {
 export class ConcreteAnnotation implements Annotation {
   public items: OrderItem[] = [];
   public status: 'open' | 'closed' | 'paid' = 'open';
-  public createdAt: Date = new Date();
-  public closedAt?: Date;
+  public createdAt: Date | Timestamp = new Date();
+  public closedAt?: Date | Timestamp;
   public customerId?: string;
 
   constructor(public id: string, public name: string, customerId?: string) {
