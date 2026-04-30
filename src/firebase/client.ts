@@ -27,5 +27,8 @@ function getOrInitializeApp(): FirebaseApp {
 }
 
 export const app = getOrInitializeApp();
-export const db = getFirestore(app);
+
+const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || 'resgatame'; 
+export const db = getFirestore(app, databaseId);
+
 export const auth = getAuth(app);
