@@ -8,26 +8,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { CreateAnnotationDialog } from '@/components/annotations/CreateAnnotationDialog';
 import { AddItemToAnnotationDialog } from '@/components/annotations/AddItemToAnnotationDialog';
+import { CloseAccountDialog } from '@/components/payments/CloseAccountDialog';
 import { useAnnotations } from '@/contexts/AnnotationsContext';
 import type { Annotation } from '@/types';
 import { PlusIcon, DollarSignIcon, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 
 export default function AnnotationsManagementPage() {
   const { annotations, closeAnnotation, removeItemFromAnnotation } = useAnnotations();
   const [selectedAnnotationForAddItem, setSelectedAnnotationForAddItem] = useState<Annotation | null>(null);
+  const [selectedAnnotationForClose, setSelectedAnnotationForClose] = useState<Annotation | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
@@ -58,11 +49,11 @@ export default function AnnotationsManagementPage() {
     currentPageClosed * itemsPerPageClosed
   );
 
-  const handleCloseAnnotation = (annotationId: string) => {
-    closeAnnotation(annotationId, "Dinheiro"); // Assuming default payment for simplicity
+  const handleConfirmClose = (annotationId: string, paymentMethodSummary: string) => {
+    closeAnnotation(annotationId, paymentMethodSummary);
     toast({
       title: "Anotação Fechada",
-      description: `Anotação #${annotationId.substring(0,6)} foi fechada e o pagamento registrado.`,
+      description: `Anotação #${annotationId.substring(0,6)} foi fechada com o pagamento: ${paymentMethodSummary}.`,
     });
   };
   
@@ -165,27 +156,14 @@ export default function AnnotationsManagementPage() {
                     <Button variant="outline" size="sm" onClick={() => setSelectedAnnotationForAddItem(annotation)}>
                       <PlusIcon className="mr-2 h-4 w-4" /> Adicionar Item
                     </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm" disabled={annotation.items.length === 0}>
-                          <DollarSignIcon className="mr-2 h-4 w-4" /> Fechar Conta
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Confirmar Fechamento da Anotação?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Anotação: {annotation.name} <br />
-                            Total: {annotation.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <br />
-                            Esta ação irá registrar a venda e marcar a anotação como paga. Deseja continuar?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleCloseAnnotation(annotation.id)}>Confirmar Pagamento</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={annotation.items.length === 0}
+                      onClick={() => setSelectedAnnotationForClose(annotation)}
+                    >
+                      <DollarSignIcon className="mr-2 h-4 w-4" /> Fechar Conta
+                    </Button>
                   </CardFooter>
                 </Card>
               ))}
@@ -226,6 +204,17 @@ export default function AnnotationsManagementPage() {
           onOpenChange={(open) => {
             if (!open) setSelectedAnnotationForAddItem(null);
           }}
+        />
+      )}
+
+      {selectedAnnotationForClose && (
+        <CloseAccountDialog
+          account={selectedAnnotationForClose}
+          isOpen={!!selectedAnnotationForClose}
+          onOpenChange={(open) => {
+            if (!open) setSelectedAnnotationForClose(null);
+          }}
+          onConfirmPayment={handleConfirmClose}
         />
       )}
 

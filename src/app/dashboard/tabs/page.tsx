@@ -7,36 +7,26 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { CreateTabDialog } from '@/components/tabs/CreateTabDialog';
 import { AddItemToTabDialog } from '@/components/tabs/AddItemToTabDialog';
+import { CloseAccountDialog } from '@/components/payments/CloseAccountDialog';
 import { useTabs } from '@/contexts/TabsContext';
 import type { Annotation as CustomerTab } from '@/types';
-import { PlusIcon, XCircleIcon, DollarSignIcon, CheckCircleIcon, PencilIcon } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { PlusIcon, DollarSignIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function TabsManagementPage() {
   const { tabs, closeTab } = useTabs();
   const [selectedTabForAddItem, setSelectedTabForAddItem] = useState<CustomerTab | null>(null);
+  const [selectedTabForClose, setSelectedTabForClose] = useState<CustomerTab | null>(null);
   const { toast } = useToast();
 
   const openTabs = tabs.filter(tab => tab.status === 'open');
   const closedTabs = tabs.filter(tab => tab.status !== 'open');
 
-  const handleCloseTab = (tabId: string) => {
-    // Assuming default payment method for simplicity here, could be a select in the dialog
-    closeTab(tabId, "Dinheiro"); 
+  const handleConfirmCloseTab = (tabId: string, paymentMethodSummary: string) => {
+    closeTab(tabId, paymentMethodSummary); 
     toast({
       title: "Aba Fechada",
-      description: `Aba #${tabId.substring(0,6)} foi fechada e o pagamento registrado.`,
+      description: `Aba #${tabId.substring(0,6)} foi fechada com o pagamento: ${paymentMethodSummary}.`,
     });
   };
 
@@ -96,27 +86,14 @@ export default function TabsManagementPage() {
                   <Button variant="outline" size="sm" onClick={() => setSelectedTabForAddItem(tab)}>
                     <PlusIcon className="mr-2 h-4 w-4" /> Adicionar Item
                   </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm" disabled={tab.items.length === 0}>
-                        <DollarSignIcon className="mr-2 h-4 w-4" /> Fechar Conta
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmar Fechamento da Aba?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Aba: {tab.name} <br />
-                          Total: {tab.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <br />
-                          Esta ação irá registrar a venda e marcar a aba como paga. Deseja continuar?
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleCloseTab(tab.id)}>Confirmar Pagamento</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={tab.items.length === 0}
+                    onClick={() => setSelectedTabForClose(tab)}
+                  >
+                    <DollarSignIcon className="mr-2 h-4 w-4" /> Fechar Conta
+                  </Button>
                 </CardFooter>
               </Card>
             ))}
@@ -131,6 +108,17 @@ export default function TabsManagementPage() {
           onOpenChange={(open) => {
             if (!open) setSelectedTabForAddItem(null);
           }}
+        />
+      )}
+
+      {selectedTabForClose && (
+        <CloseAccountDialog
+          account={selectedTabForClose}
+          isOpen={!!selectedTabForClose}
+          onOpenChange={(open) => {
+            if (!open) setSelectedTabForClose(null);
+          }}
+          onConfirmPayment={handleConfirmCloseTab}
         />
       )}
 

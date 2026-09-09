@@ -1,11 +1,17 @@
 
 import type { Timestamp } from 'firebase/firestore';
 
+export type ItemCategory = 
+  | 'Lanchonete'
+  | 'Lojinha - Juventure'
+  | 'Lojinha - Santos Anjos'
+  | 'Lojinha - Apresentação';
+
 export interface MenuItem {
   id: string;
   name: string;
   price: number;
-  category: 'Lanchonete' | 'Lojinha';
+  category: ItemCategory;
 }
 
 export interface Customer {

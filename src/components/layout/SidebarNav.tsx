@@ -14,6 +14,7 @@ import {
   Contact,
   Package,
   FileText, // New Icon for Reports
+  CreditCard,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
   { href: '/dashboard/annotations', label: 'Anotações de Pedidos', icon: Users },
   { href: '/dashboard/orders', label: 'Novo Pedido', icon: ShoppingCart },
   { href: '/dashboard/sales', label: 'Registro de Vendas', icon: History },
+  { href: '/dashboard/payments', label: 'Taxas & Pagamentos', icon: CreditCard },
   { href: '/dashboard/customers', label: 'Clientes', icon: Contact },
   { href: '/dashboard/items', label: 'Itens', icon: Package },
   { href: '/dashboard/reports', label: 'Relatórios', icon: FileText, separator: true },
@@ -60,6 +62,20 @@ export function SidebarNav() {
           </Button>
         </React.Fragment>
       ))}
+
+      {/* Logos no rodapé da navbar, abaixo do item Relatórios */}
+      <div className="mt-6 pt-4 border-t border-sidebar-border flex items-center justify-center gap-3 px-2 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
+        <img
+          src="/assets/logo-o-caminho.png"
+          alt="Logo O Caminho"
+          className="h-12 max-w-[45%] object-contain rounded-md bg-white/90 p-1 shadow-sm transition-transform hover:scale-105"
+        />
+        <img
+          src="/assets/logo-juventude-caminho.jpg"
+          alt="Logo Juventude do Caminho"
+          className="h-12 max-w-[45%] object-contain rounded-md shadow-sm transition-transform hover:scale-105"
+        />
+      </div>
     </nav>
   );
 }

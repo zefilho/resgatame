@@ -33,10 +33,17 @@ interface ItemFormDialogProps {
   item?: MenuItem;
 }
 
+const ITEM_CATEGORIES = [
+  'Lanchonete',
+  'Lojinha - Juventure',
+  'Lojinha - Santos Anjos',
+  'Lojinha - Apresentação',
+] as const;
+
 const formSchema = z.object({
   name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
   price: z.coerce.number().positive({ message: "O preço deve ser um número positivo." }),
-  category: z.enum(['Lanchonete', 'Lojinha'], { required_error: "A categoria é obrigatória." }),
+  category: z.enum(ITEM_CATEGORIES, { required_error: "A categoria é obrigatória." }),
 });
 
 export function ItemFormDialog({ isOpen, onOpenChange, item }: ItemFormDialogProps) {
@@ -124,15 +131,18 @@ export function ItemFormDialog({ isOpen, onOpenChange, item }: ItemFormDialogPro
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Categoria/Tag</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione uma categoria" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Lanchonete">Lanchonete</SelectItem>
-                      <SelectItem value="Lojinha">Lojinha</SelectItem>
+                      {ITEM_CATEGORIES.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
