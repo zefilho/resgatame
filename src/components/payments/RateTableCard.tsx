@@ -44,9 +44,8 @@ export function RateTableCard({ className = '' }: { className?: string }) {
                     <TableHead className="w-[140px] font-semibold">Bandeira</TableHead>
                     <TableHead className="font-semibold text-center">Débito</TableHead>
                     <TableHead className="font-semibold text-center">Crédito 1x</TableHead>
-                    <TableHead className="font-semibold text-center">2x a 3x</TableHead>
-                    <TableHead className="font-semibold text-center">4x a 6x</TableHead>
-                    <TableHead className="font-semibold text-center">7x a 12x</TableHead>
+                    <TableHead className="font-semibold text-center">Crédito 2x a 6x</TableHead>
+                    <TableHead className="font-semibold text-center">Crédito 7x a 12x</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -78,14 +77,15 @@ export function RateTableCard({ className = '' }: { className?: string }) {
                             {rates.credit1xRate.toFixed(2)}%
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-center text-xs font-mono">
-                          {rates.installmentRates[2].toFixed(2)}% - {rates.installmentRates[3].toFixed(2)}%
+                        <TableCell className="text-center font-mono">
+                          <Badge variant="outline" className="font-mono border-primary/30">
+                            {rates.installmentRates[2].toFixed(2)}%
+                          </Badge>
                         </TableCell>
-                        <TableCell className="text-center text-xs font-mono">
-                          {rates.installmentRates[4].toFixed(2)}% - {rates.installmentRates[6].toFixed(2)}%
-                        </TableCell>
-                        <TableCell className="text-center text-xs font-mono">
-                          {rates.installmentRates[7].toFixed(2)}% - {rates.installmentRates[12].toFixed(2)}%
+                        <TableCell className="text-center font-mono">
+                          <Badge variant="outline" className="font-mono border-primary/30">
+                            {rates.installmentRates[7].toFixed(2)}%
+                          </Badge>
                         </TableCell>
                       </TableRow>
                     );
