@@ -20,7 +20,7 @@ import { useAnnotations } from '@/contexts/AnnotationsContext';
 import { useMenu } from '@/contexts/MenuContext';
 import type { Annotation, MenuItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AddItemToAnnotationDialogProps {
@@ -32,17 +32,28 @@ interface AddItemToAnnotationDialogProps {
 export function AddItemToAnnotationDialog({ annotation, isOpen, onOpenChange }: AddItemToAnnotationDialogProps) {
   const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   
   const { addItemToAnnotation } = useAnnotations();
   const { menuItems } = useMenu();
   const { toast } = useToast();
 
+  const filteredMenuItems = useMemo(() => {
+    if (!searchQuery.trim()) return menuItems;
+    const q = searchQuery.toLowerCase();
+    return menuItems.filter(
+      (item) =>
+        item.name.toLowerCase().includes(q) ||
+        item.category.toLowerCase().includes(q)
+    );
+  }, [menuItems, searchQuery]);
+
   const groupedMenuItems = useMemo(() => {
-    return menuItems.reduce((acc, item) => {
+    return filteredMenuItems.reduce((acc, item) => {
       (acc[item.category] = acc[item.category] || []).push(item);
       return acc;
     }, {} as Record<string, MenuItem[]>);
-  }, [menuItems]);
+  }, [filteredMenuItems]);
 
   const handleAddItem = () => {
     if (!selectedMenuItem || quantity <= 0) {
@@ -68,6 +79,7 @@ export function AddItemToAnnotationDialog({ annotation, isOpen, onOpenChange }: 
     if (!isOpen) {
       setSelectedMenuItem(null);
       setQuantity(1);
+      setSearchQuery('');
     }
   }, [isOpen]);
 
@@ -78,66 +90,85 @@ export function AddItemToAnnotationDialog({ annotation, isOpen, onOpenChange }: 
         <DialogHeader>
           <DialogTitle>Adicionar Item à Anotação: {annotation.name}</DialogTitle>
           <DialogDescription>
-            Clique em um item, defina a quantidade e adicione à anotação.
+            Busque ou selecione um item, defina a quantidade e adicione à conta do cliente.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex flex-col sm:flex-row gap-4 my-4 items-end">
-          <div className="flex-grow sm:flex-grow-0">
-            <Label htmlFor={`quantity-dialog-${annotation.id}`}>Quantidade</Label>
+        <div className="space-y-4 my-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              id={`quantity-dialog-${annotation.id}`}
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(parseInt(e.target.value, 10) || 1)}
-              min="1"
-              className="w-full sm:w-24"
+              type="text"
+              placeholder="Filtrar por nome do item ou categoria..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8"
             />
           </div>
-          <Button 
-            onClick={handleAddItem} 
-            disabled={!selectedMenuItem || quantity <= 0}
-            className="w-full sm:w-auto"
-          >
-            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Selecionado
-          </Button>
+
+          <div className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="flex-grow sm:flex-grow-0">
+              <Label htmlFor={`quantity-dialog-${annotation.id}`}>Quantidade</Label>
+              <Input
+                id={`quantity-dialog-${annotation.id}`}
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value, 10) || 1)}
+                min="1"
+                className="w-full sm:w-24"
+              />
+            </div>
+            <Button 
+              onClick={handleAddItem} 
+              disabled={!selectedMenuItem || quantity <= 0}
+              className="w-full sm:w-auto"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Selecionado
+            </Button>
+          </div>
         </div>
 
         <ScrollArea className="h-[350px] border rounded-md p-3">
-          {Object.entries(groupedMenuItems).map(([category, items]) => (
-            <div key={category} className="mb-4 last:mb-0">
-              <h3 className="text-lg font-semibold mb-2 sticky top-0 bg-background py-1 -mx-3 px-3 border-b">{category}</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                {items.map(item => (
-                  <Card 
-                    key={item.id} 
-                    onClick={() => setSelectedMenuItem(item)}
-                    className={cn(
-                      "cursor-pointer hover:shadow-md transition-all duration-150 ease-in-out flex flex-col text-sm",
-                      selectedMenuItem?.id === item.id && "ring-2 ring-primary shadow-lg"
-                    )}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedMenuItem(item);}}
-                    aria-pressed={selectedMenuItem?.id === item.id}
-                    aria-label={`Selecionar ${item.name}`}
-                  >
-                    <CardContent className="p-2 flex-grow flex flex-col justify-between">
-                      <div>
-                        <p className="font-medium leading-tight">{item.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </p>
-                      </div>
-                      {selectedMenuItem?.id === item.id && (
-                          <span className="text-xs text-primary font-semibold mt-1 self-start">Selecionado</span>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+          {Object.keys(groupedMenuItems).length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">
+              Nenhum item encontrado para &quot;{searchQuery}&quot;.
             </div>
-          ))}
+          ) : (
+            Object.entries(groupedMenuItems).map(([category, items]) => (
+              <div key={category} className="mb-4 last:mb-0">
+                <h3 className="text-lg font-semibold mb-2 sticky top-0 bg-background py-1 -mx-3 px-3 border-b">{category}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  {items.map(item => (
+                    <Card 
+                      key={item.id} 
+                      onClick={() => setSelectedMenuItem(item)}
+                      className={cn(
+                        "cursor-pointer hover:shadow-md transition-all duration-150 ease-in-out flex flex-col text-sm",
+                        selectedMenuItem?.id === item.id && "ring-2 ring-primary shadow-lg"
+                      )}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedMenuItem(item);}}
+                      aria-pressed={selectedMenuItem?.id === item.id}
+                      aria-label={`Selecionar ${item.name}`}
+                    >
+                      <CardContent className="p-2 flex-grow flex flex-col justify-between">
+                        <div>
+                          <p className="font-medium leading-tight">{item.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </p>
+                        </div>
+                        {selectedMenuItem?.id === item.id && (
+                            <span className="text-xs text-primary font-semibold mt-1 self-start">Selecionado</span>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
         </ScrollArea>
         
         <DialogFooter className="mt-4">
