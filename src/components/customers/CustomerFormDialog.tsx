@@ -23,8 +23,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCustomers } from '@/contexts/CustomersContext';
-import type { Customer } from '@/types';
+import type { Customer, CustomerTag } from '@/types';
 
 interface CustomerFormDialogProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ interface CustomerFormDialogProps {
 const formSchema = z.object({
   name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
   phone: z.string().optional(),
+  tag: z.enum(['Cursista', 'Servo'], { required_error: "A tag é obrigatória." }),
 });
 
 export function CustomerFormDialog({ isOpen, onOpenChange, customer }: CustomerFormDialogProps) {
@@ -45,6 +47,7 @@ export function CustomerFormDialog({ isOpen, onOpenChange, customer }: CustomerF
     defaultValues: {
       name: '',
       phone: '',
+      tag: 'Cursista',
     },
   });
 
@@ -54,11 +57,13 @@ export function CustomerFormDialog({ isOpen, onOpenChange, customer }: CustomerF
         form.reset({
             name: customer.name,
             phone: customer.phone || '',
+            tag: customer.tag || 'Cursista',
         });
         } else {
         form.reset({
             name: '',
             phone: '',
+            tag: 'Cursista',
         });
         }
     }
@@ -96,6 +101,27 @@ export function CustomerFormDialog({ isOpen, onOpenChange, customer }: CustomerF
                   <FormControl>
                     <Input placeholder="Nome completo do cliente" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="tag"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tag / Tipo de Cliente</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Cursista">Cursista</SelectItem>
+                      <SelectItem value="Servo">Servo</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

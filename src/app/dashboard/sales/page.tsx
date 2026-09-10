@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useSales } from '@/contexts/SalesContext';
 import { useAnnotations } from '@/contexts/AnnotationsContext';
+import { useCustomers } from '@/contexts/CustomersContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableCaption } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -25,6 +26,7 @@ import { Input } from '@/components/ui/input';
 export default function SalesLogPage() {
   const { transactions } = useSales();
   const { getAnnotationById } = useAnnotations();
+  const { getCustomerById } = useCustomers();
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -107,7 +109,9 @@ export default function SalesLogPage() {
                 <TableBody>
                   {paginatedTransactions.map((txn) => {
                     const annotation = txn.annotationId ? getAnnotationById(txn.annotationId) : null;
+                    const customer = annotation?.customerId ? getCustomerById(annotation.customerId) : null;
                     const originName = annotation ? annotation.name : 'Venda Direta';
+                    const tag = customer?.tag || (annotation?.customerId ? 'Cursista' : null);
 
                     return (
                       <TableRow key={txn.id}>
@@ -119,7 +123,16 @@ export default function SalesLogPage() {
                             {txn.paymentMethod || 'N/A'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-medium">{originName}</TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <span>{originName}</span>
+                            {tag && (
+                              <Badge variant={tag === 'Cursista' ? 'secondary' : 'default'} className="text-[11px] font-normal">
+                                {tag}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-right font-mono">{txn.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</TableCell>
                         <TableCell className="text-center">
                           <Button variant="ghost" size="icon" onClick={() => handleViewDetails(txn)} title="Ver detalhes da transação">
@@ -160,23 +173,34 @@ export default function SalesLogPage() {
         </CardContent>
       </Card>
       
-      {selectedTxn && (
-        <Dialog open={!!selectedTxn} onOpenChange={(isOpen) => !isOpen && setSelectedTxn(null)}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Detalhes da Transação</DialogTitle>
-              <DialogDescription>
-                ID: <span className="font-mono text-xs">{selectedTxn.id}</span>
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-               <div>
-                <h4 className="font-semibold text-sm mb-2">Resumo</h4>
-                <p className="text-sm"><strong>Data:</strong> {(selectedTxn.timestamp instanceof Date ? selectedTxn.timestamp : (selectedTxn.timestamp as any).toDate?.() || new Date(selectedTxn.timestamp as any)).toLocaleString('pt-BR')}</p>
-                <p className="text-sm"><strong>Origem:</strong> {selectedTxn.annotationId ? getAnnotationById(selectedTxn.annotationId)?.name : 'Venda Direta'}</p>
-                <p className="text-sm"><strong>Pagamento:</strong> {selectedTxn.paymentMethod}</p>
-                <p className="text-sm font-bold"><strong>Total:</strong> {selectedTxn.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-              </div>
+      {selectedTxn && (() => {
+        const annotation = selectedTxn.annotationId ? getAnnotationById(selectedTxn.annotationId) : null;
+        const customer = annotation?.customerId ? getCustomerById(annotation.customerId) : null;
+        const tag = customer?.tag || (annotation?.customerId ? 'Cursista' : null);
+        return (
+          <Dialog open={!!selectedTxn} onOpenChange={(isOpen) => !isOpen && setSelectedTxn(null)}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Detalhes da Transação</DialogTitle>
+                <DialogDescription>
+                  ID: <span className="font-mono text-xs">{selectedTxn.id}</span>
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                 <div>
+                  <h4 className="font-semibold text-sm mb-2">Resumo</h4>
+                  <p className="text-sm"><strong>Data:</strong> {(selectedTxn.timestamp instanceof Date ? selectedTxn.timestamp : (selectedTxn.timestamp as any).toDate?.() || new Date(selectedTxn.timestamp as any)).toLocaleString('pt-BR')}</p>
+                  <div className="text-sm flex items-center gap-2">
+                    <strong>Origem:</strong> {annotation ? annotation.name : 'Venda Direta'}
+                    {tag && (
+                      <Badge variant={tag === 'Cursista' ? 'secondary' : 'default'} className="text-[11px]">
+                        {tag}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm"><strong>Pagamento:</strong> {selectedTxn.paymentMethod}</p>
+                  <p className="text-sm font-bold"><strong>Total:</strong> {selectedTxn.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                </div>
 
               <div>
                 <h4 className="font-semibold text-sm mb-2">Itens Comprados ({selectedTxn.items.length})</h4>
@@ -211,7 +235,8 @@ export default function SalesLogPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      )}
+        );
+      })()}
 
     </div>
   );

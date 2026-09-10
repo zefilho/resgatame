@@ -27,6 +27,7 @@ import {
 import { CustomerFormDialog } from '@/components/customers/CustomerFormDialog';
 import type { Customer } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 
 
 export default function CustomersPage() {
@@ -64,9 +65,12 @@ export default function CustomersPage() {
   };
 
   const filteredCustomers = useMemo(() => 
-    customers.filter(customer =>
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase())
-    ), [customers, searchTerm]);
+    customers.filter(customer => {
+      const term = searchTerm.toLowerCase();
+      const tag = (customer.tag || 'Cursista').toLowerCase();
+      const phone = (customer.phone || '').toLowerCase();
+      return customer.name.toLowerCase().includes(term) || tag.includes(term) || phone.includes(term);
+    }), [customers, searchTerm]);
 
   const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
   
@@ -118,6 +122,7 @@ export default function CustomersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
+                <TableHead>Tipo / Tag</TableHead>
                 <TableHead>Telefone</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -127,44 +132,53 @@ export default function CustomersPage() {
                 Array.from({length: 5}).map((_, i) => (
                   <TableRow key={i}>
                     <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                     <TableCell className="text-right"><Skeleton className="h-8 w-8" /></TableCell>
                   </TableRow>
                 ))
               ) : paginatedCustomers.length === 0 ? (
                  <TableRow>
-                    <TableCell colSpan={3} className="h-24 text-center">
+                    <TableCell colSpan={4} className="h-24 text-center">
                         {searchTerm ? `Nenhum cliente encontrado para "${searchTerm}".` : 'Nenhum cliente cadastrado.'}
                     </TableCell>
                 </TableRow>
               ) : (
-                paginatedCustomers.map(customer => (
-                <TableRow key={customer.id}>
-                  <TableCell className="font-medium">{customer.name}</TableCell>
-                  <TableCell>{customer.phone || 'N/A'}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Abrir menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(customer)}>
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => handleDeleteRequest(customer)}
-                        >
-                          Deletar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              )))}
+                paginatedCustomers.map(customer => {
+                  const tag = customer.tag || 'Cursista';
+                  return (
+                    <TableRow key={customer.id}>
+                      <TableCell className="font-medium">{customer.name}</TableCell>
+                      <TableCell>
+                        <Badge variant={tag === 'Cursista' ? 'secondary' : 'default'} className={tag === 'Servo' ? 'bg-primary text-primary-foreground' : ''}>
+                          {tag}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{customer.phone || 'N/A'}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Abrir menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(customer)}>
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => handleDeleteRequest(customer)}
+                            >
+                              Deletar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                }))}
             </TableBody>
           </Table>
            {totalPages > 1 && (

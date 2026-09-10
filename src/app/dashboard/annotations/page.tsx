@@ -10,13 +10,16 @@ import { CreateAnnotationDialog } from '@/components/annotations/CreateAnnotatio
 import { AddItemToAnnotationDialog } from '@/components/annotations/AddItemToAnnotationDialog';
 import { CloseAccountDialog } from '@/components/payments/CloseAccountDialog';
 import { useAnnotations } from '@/contexts/AnnotationsContext';
+import { useCustomers } from '@/contexts/CustomersContext';
 import type { Annotation } from '@/types';
 import { PlusIcon, DollarSignIcon, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 export default function AnnotationsManagementPage() {
   const { annotations, closeAnnotation, removeItemFromAnnotation } = useAnnotations();
+  const { getCustomerById } = useCustomers();
   const [selectedAnnotationForAddItem, setSelectedAnnotationForAddItem] = useState<Annotation | null>(null);
   const [selectedAnnotationForClose, setSelectedAnnotationForClose] = useState<Annotation | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -103,21 +106,31 @@ export default function AnnotationsManagementPage() {
         ) : (
           <>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {paginatedOpenAnnotations.map((annotation) => (
-                <Card key={annotation.id} className="flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      {annotation.name}
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                          annotation.status === 'open' ? 'bg-green-100 text-green-700' : 
-                          annotation.status === 'paid' ? 'bg-blue-100 text-blue-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
-                        {annotation.status === 'open' ? 'Aberta' : annotation.status === 'paid' ? 'Paga' : 'Fechada'}
-                      </span>
-                    </CardTitle>
-                    <CardDescription>Criada em: {(annotation.createdAt instanceof Date ? annotation.createdAt : (annotation.createdAt as any).toDate?.() || new Date(annotation.createdAt as any)).toLocaleDateString('pt-BR')}</CardDescription>
-                  </CardHeader>
+              {paginatedOpenAnnotations.map((annotation) => {
+                const customer = annotation.customerId ? getCustomerById(annotation.customerId) : null;
+                const tag = customer?.tag || (annotation.customerId ? 'Cursista' : null);
+                return (
+                  <Card key={annotation.id} className="flex flex-col">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span>{annotation.name}</span>
+                          {tag && (
+                            <Badge variant={tag === 'Cursista' ? 'secondary' : 'default'} className="text-[11px] font-normal">
+                              {tag}
+                            </Badge>
+                          )}
+                        </div>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                            annotation.status === 'open' ? 'bg-green-100 text-green-700' : 
+                            annotation.status === 'paid' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                          {annotation.status === 'open' ? 'Aberta' : annotation.status === 'paid' ? 'Paga' : 'Fechada'}
+                        </span>
+                      </CardTitle>
+                      <CardDescription>Criada em: {(annotation.createdAt instanceof Date ? annotation.createdAt : (annotation.createdAt as any).toDate?.() || new Date(annotation.createdAt as any)).toLocaleDateString('pt-BR')}</CardDescription>
+                    </CardHeader>
                   <CardContent className="flex-grow">
                     <ScrollArea className="h-32">
                       {annotation.items.length === 0 ? (
@@ -166,7 +179,8 @@ export default function AnnotationsManagementPage() {
                     </Button>
                   </CardFooter>
                 </Card>
-              ))}
+              );
+            })}
             </div>
             {totalPagesOpen > 1 && (
               <div className="flex items-center justify-end space-x-2 py-4">
@@ -225,21 +239,32 @@ export default function AnnotationsManagementPage() {
            </div>
           <ScrollArea className="h-64">
             <div className="space-y-3">
-            {paginatedClosedAnnotations.map((annotation) => (
-              <Card key={annotation.id} className="opacity-70">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center justify-between">
-                    {annotation.name}
-                     <span className={`text-xs px-2 py-1 rounded-full ${
-                        annotation.status === 'paid' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
-                      }`}>
-                      {annotation.status === 'paid' ? 'Paga' : 'Fechada'}
-                    </span>
-                  </CardTitle>
-                  <CardDescription className="text-xs">Fechada em: {((annotation.closedAt || annotation.createdAt) instanceof Date ? (annotation.closedAt || annotation.createdAt) : ((annotation.closedAt || annotation.createdAt) as any).toDate?.() || new Date((annotation.closedAt || annotation.createdAt) as any)).toLocaleDateString('pt-BR')} - Total: {annotation.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
+            {paginatedClosedAnnotations.map((annotation) => {
+              const customer = annotation.customerId ? getCustomerById(annotation.customerId) : null;
+              const tag = customer?.tag || (annotation.customerId ? 'Cursista' : null);
+              return (
+                <Card key={annotation.id} className="opacity-70">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span>{annotation.name}</span>
+                        {tag && (
+                          <Badge variant={tag === 'Cursista' ? 'secondary' : 'default'} className="text-[11px] font-normal">
+                            {tag}
+                          </Badge>
+                        )}
+                      </div>
+                       <span className={`text-xs px-2 py-1 rounded-full ${
+                          annotation.status === 'paid' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                        {annotation.status === 'paid' ? 'Paga' : 'Fechada'}
+                      </span>
+                    </CardTitle>
+                    <CardDescription className="text-xs">Fechada em: {((annotation.closedAt || annotation.createdAt) instanceof Date ? (annotation.closedAt || annotation.createdAt) : ((annotation.closedAt || annotation.createdAt) as any).toDate?.() || new Date((annotation.closedAt || annotation.createdAt) as any)).toLocaleDateString('pt-BR')} - Total: {annotation.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</CardDescription>
+                  </CardHeader>
+                </Card>
+              );
+            })}
             </div>
           </ScrollArea>
            {totalPagesClosed > 1 && (

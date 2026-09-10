@@ -93,7 +93,7 @@ export function CreateAnnotationDialog() {
                  </SelectItem>
                 {customers.map(customer => (
                   <SelectItem key={customer.id} value={customer.id}>
-                    {customer.name}
+                    {customer.name} <span className="text-xs text-muted-foreground">({customer.tag || 'Cursista'})</span>
                   </SelectItem>
                 ))}
               </SelectContent>

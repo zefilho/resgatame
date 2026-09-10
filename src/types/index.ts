@@ -14,10 +14,13 @@ export interface MenuItem {
   category: ItemCategory;
 }
 
+export type CustomerTag = 'Cursista' | 'Servo';
+
 export interface Customer {
   id: string;
   name: string;
   phone?: string;
+  tag?: CustomerTag;
 }
 
 export interface OrderItem {
