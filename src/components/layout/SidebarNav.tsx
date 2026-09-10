@@ -64,16 +64,16 @@ export function SidebarNav() {
       ))}
 
       {/* Logos no rodapé da navbar, abaixo do item Relatórios */}
-      <div className="mt-6 pt-4 border-t border-sidebar-border flex items-center justify-center gap-3 px-2 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
+      <div className="mt-6 pt-4 border-t border-sidebar-border flex flex-col items-center justify-center gap-3 px-2">
         <img
           src="/assets/logo-o-caminho.png"
           alt="Logo O Caminho"
-          className="h-12 max-w-[45%] object-contain rounded-md bg-white/90 p-1 shadow-sm transition-transform hover:scale-105"
+          className="h-20 w-auto max-w-[85%] object-contain rounded-lg bg-white p-2 shadow-md transition-transform hover:scale-105"
         />
         <img
           src="/assets/logo-juventude-caminho.jpg"
           alt="Logo Juventude do Caminho"
-          className="h-12 max-w-[45%] object-contain rounded-md shadow-sm transition-transform hover:scale-105"
+          className="h-20 w-auto max-w-[85%] object-contain rounded-lg bg-white p-1 shadow-md transition-transform hover:scale-105"
         />
       </div>
     </nav>
