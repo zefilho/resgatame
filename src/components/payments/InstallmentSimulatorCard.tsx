@@ -223,10 +223,10 @@ export function InstallmentSimulatorCard({
             )}
 
             {/* Financial Breakdown Details */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm pt-1">
-              <div className="p-2.5 rounded bg-background border flex flex-col justify-between">
-                <span className="text-xs text-muted-foreground">Valor Líquido (Loja)</span>
-                <span className="font-semibold text-base font-mono">
+            <div className="flex flex-col gap-2 text-sm pt-1">
+              <div className="p-2.5 rounded bg-background border flex items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground font-medium">Valor Líquido (Loja)</span>
+                <span className="font-semibold text-sm font-mono">
                   {simulation.netAmount.toLocaleString('pt-BR', {
                     style: 'currency',
                     currency: 'BRL',
@@ -234,18 +234,16 @@ export function InstallmentSimulatorCard({
                 </span>
               </div>
 
-              <div className="p-2.5 rounded bg-background border flex flex-col justify-between">
-                <span className="text-xs text-muted-foreground">Taxa da Maquininha</span>
-                <div className="flex items-center gap-1">
-                  <Badge variant="outline" className="font-mono text-xs font-semibold">
-                    {simulation.feePercentage.toFixed(2)}%
-                  </Badge>
-                </div>
+              <div className="p-2.5 rounded bg-background border flex items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground font-medium">Taxa da Maquininha</span>
+                <Badge variant="outline" className="font-mono text-xs font-semibold">
+                  {simulation.feePercentage.toFixed(2)}%
+                </Badge>
               </div>
 
-              <div className="p-2.5 rounded bg-background border flex flex-col justify-between">
-                <span className="text-xs text-muted-foreground">Taxa Repassada (R$)</span>
-                <span className="font-semibold text-base font-mono text-amber-700 dark:text-amber-400">
+              <div className="p-2.5 rounded bg-background border flex items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground font-medium">Taxa Repassada (R$)</span>
+                <span className="font-semibold text-sm font-mono text-amber-700 dark:text-amber-400">
                   + {simulation.feeAmount.toLocaleString('pt-BR', {
                     style: 'currency',
                     currency: 'BRL',
@@ -253,9 +251,9 @@ export function InstallmentSimulatorCard({
                 </span>
               </div>
 
-              <div className="p-2.5 rounded bg-background border flex flex-col justify-between">
-                <span className="text-xs text-muted-foreground">Total Bruto Cartão</span>
-                <span className="font-bold text-base font-mono text-primary">
+              <div className="p-2.5 rounded bg-background border flex items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground font-medium">Total Bruto Cartão</span>
+                <span className="font-bold text-sm font-mono text-primary">
                   {simulation.grossAmount.toLocaleString('pt-BR', {
                     style: 'currency',
                     currency: 'BRL',
