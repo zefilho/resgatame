@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Transaction, OrderItem } from '@/types';
+import type { Transaction, OrderItem, TagSaleSummary } from '@/types';
 import { ConcreteOrderItem } from '@/types';
 import React, { createContext, useContext, useCallback, useMemo, useState, useEffect } from 'react';
 import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from 'firebase/firestore';
@@ -44,6 +44,7 @@ interface SalesContextType {
   getPaymentMethodSummaryForPeriod: (period: Period) => PaymentMethodSummary[];
   getDailyFinancialSummary: () => DailyFinancialSummary;
   getFullItemSalesSummary: () => ItemSaleSummary[];
+  getTagSalesSummary: () => TagSaleSummary[];
 }
 
 const SalesContext = createContext<SalesContextType | undefined>(undefined);
@@ -141,6 +142,38 @@ export const SalesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .sort((a, b) => b.quantity - a.quantity);
   }, [transactions]);
 
+  const getTagSalesSummary = useCallback((): TagSaleSummary[] => {
+    const summary: Record<string, { totalAmount: number; totalQuantity: number }> = {
+      'Lanchonete': { totalAmount: 0, totalQuantity: 0 },
+      'Lojinha - Juventude': { totalAmount: 0, totalQuantity: 0 },
+      'Lojinha - Santos Anjos': { totalAmount: 0, totalQuantity: 0 },
+      'Lojinha - Apresentação': { totalAmount: 0, totalQuantity: 0 },
+    };
+
+    transactions.forEach(txn => {
+      txn.items.forEach(item => {
+        let tag = item.menuItem?.category || 'Lanchonete';
+        if (tag === ('Lojinha - Juventure' as any)) {
+          tag = 'Lojinha - Juventude';
+        }
+        if (!summary[tag]) {
+          summary[tag] = { totalAmount: 0, totalQuantity: 0 };
+        }
+        summary[tag].totalAmount += item.totalPrice;
+        summary[tag].totalQuantity += item.quantity;
+      });
+    });
+
+    const grandTotal = Object.values(summary).reduce((sum, item) => sum + item.totalAmount, 0);
+
+    return Object.entries(summary).map(([tag, data]) => ({
+      tag,
+      totalAmount: data.totalAmount,
+      totalQuantity: data.totalQuantity,
+      percentage: grandTotal > 0 ? (data.totalAmount / grandTotal) * 100 : 0,
+    }));
+  }, [transactions]);
+
   const getPaymentMethodSummaryForPeriod = useCallback((period: Period): PaymentMethodSummary[] => {
     const relevantTransactions = getTransactionsForPeriod(period);
     const summary: { [key: string]: number } = {};
@@ -183,10 +216,12 @@ export const SalesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     getItemSalesSummaryForPeriod, 
     getPaymentMethodSummaryForPeriod, 
     getDailyFinancialSummary, 
-    getFullItemSalesSummary
+    getFullItemSalesSummary,
+    getTagSalesSummary
   }), [
     transactions, addTransaction, getStatsForPeriod, getTransactionsForPeriod, 
-    getItemSalesSummaryForPeriod, getPaymentMethodSummaryForPeriod, getDailyFinancialSummary, getFullItemSalesSummary
+    getItemSalesSummaryForPeriod, getPaymentMethodSummaryForPeriod, getDailyFinancialSummary, getFullItemSalesSummary,
+    getTagSalesSummary
   ]);
 
   return (

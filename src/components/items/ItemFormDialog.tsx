@@ -35,7 +35,7 @@ interface ItemFormDialogProps {
 
 const ITEM_CATEGORIES = [
   'Lanchonete',
-  'Lojinha - Juventure',
+  'Lojinha - Juventude',
   'Lojinha - Santos Anjos',
   'Lojinha - Apresentação',
 ] as const;

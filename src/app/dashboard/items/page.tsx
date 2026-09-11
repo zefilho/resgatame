@@ -33,7 +33,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const CATEGORY_OPTIONS = [
   { value: 'all', label: 'Todas as Categorias' },
   { value: 'Lanchonete', label: 'Lanchonete' },
-  { value: 'Lojinha - Juventure', label: 'Lojinha - Juventure' },
+  { value: 'Lojinha - Juventude', label: 'Lojinha - Juventude' },
   { value: 'Lojinha - Santos Anjos', label: 'Lojinha - Santos Anjos' },
   { value: 'Lojinha - Apresentação', label: 'Lojinha - Apresentação' },
 ];

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo } from 'react';
@@ -9,20 +8,20 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSales } from "@/contexts/SalesContext";
 import { useAnnotations } from "@/contexts/AnnotationsContext";
 import { useCustomers } from "@/contexts/CustomersContext";
-import { Download, Package } from "lucide-react";
+import { Download, Package, Tag } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import type { Annotation } from '@/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from '@/components/ui/badge';
 
 export default function ReportsPage() {
-  const { getDailyFinancialSummary, getFullItemSalesSummary } = useSales();
+  const { getDailyFinancialSummary, getFullItemSalesSummary, getTagSalesSummary } = useSales();
   const { annotations } = useAnnotations();
   const { getCustomerById } = useCustomers();
   const { toast } = useToast();
 
   const financialSummary = useMemo(() => getDailyFinancialSummary(), [getDailyFinancialSummary]);
   const itemSalesSummary = useMemo(() => getFullItemSalesSummary(), [getFullItemSalesSummary]);
+  const tagSalesSummary = useMemo(() => getTagSalesSummary(), [getTagSalesSummary]);
   const openAnnotations = useMemo(() => annotations.filter(a => a.status === 'open'), [annotations]);
 
   const downloadCSV = (data: any[], filename: string) => {
@@ -67,6 +66,16 @@ export default function ReportsPage() {
     );
     downloadCSV(reportData, 'relatorio-financeiro-detalhado.csv');
   };
+
+  const handleExportTagSalesReport = () => {
+    const reportData = tagSalesSummary.map(item => ({
+      TAG_Categoria: item.tag,
+      QuantidadeVendida: item.totalQuantity,
+      ValorTotalVendas: item.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+      PorcentagemDoTotal: `${item.percentage.toFixed(1)}%`,
+    }));
+    downloadCSV(reportData, 'relatorio-vendas-por-tag.csv');
+  };
   
   const handleExportItemSalesReport = () => {
     const reportData = itemSalesSummary.map(item => ({
@@ -96,10 +105,83 @@ export default function ReportsPage() {
     <div className="flex flex-col gap-6">
       <header>
         <h1 className="text-3xl font-headline font-semibold">Relatórios e Exportações</h1>
-        <p className="text-muted-foreground">Exporte dados financeiros, de vendas e de anotações em aberto.</p>
+        <p className="text-muted-foreground">Exporte dados financeiros, vendas por TAG, anotações em aberto e produtos vendidos.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* Card: Vendas por TAG / Categoria */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-start justify-between">
+            <div className="flex-grow">
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Tag className="h-5 w-5 text-primary" />
+                Vendas por TAG / Categoria
+              </CardTitle>
+              <CardDescription>
+                Resumo do valor total de vendas e quantidade de itens acumulados por TAG (Lanchonete, Lojinha - Juventude, Lojinha - Santos Anjos, Lojinha - Apresentação).
+              </CardDescription>
+            </div>
+            <Button onClick={handleExportTagSalesReport} disabled={tagSalesSummary.every(t => t.totalAmount === 0)} className="ml-4 shrink-0">
+              <Download className="mr-2 h-4 w-4" />
+              Exportar .CSV
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {tagSalesSummary.map((item) => (
+                <div key={item.tag} className="p-4 rounded-lg border bg-card flex flex-col justify-between space-y-2 shadow-sm">
+                  <div className="flex justify-between items-center">
+                    <Badge variant="outline" className="font-semibold text-xs py-1 px-2 bg-primary/5">
+                      {item.tag}
+                    </Badge>
+                    <span className="text-xs font-mono text-muted-foreground">{item.percentage.toFixed(1)}%</span>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold font-mono text-primary">
+                      {item.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {item.totalQuantity} unidade(s) vendida(s)
+                    </p>
+                  </div>
+                  <div className="w-full bg-secondary h-2 rounded-full overflow-hidden mt-2">
+                    <div
+                      className="bg-primary h-full transition-all duration-300"
+                      style={{ width: `${Math.max(item.percentage, item.totalAmount > 0 ? 4 : 0)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>TAG / Categoria</TableHead>
+                  <TableHead className="text-center">Quantidade Vendida</TableHead>
+                  <TableHead className="text-right">Representatividade (%)</TableHead>
+                  <TableHead className="text-right">Valor Total (R$)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tagSalesSummary.map((item) => (
+                  <TableRow key={item.tag}>
+                    <TableCell className="font-medium">
+                      <Badge variant="secondary">{item.tag}</Badge>
+                    </TableCell>
+                    <TableCell className="text-center font-mono">{item.totalQuantity} un.</TableCell>
+                    <TableCell className="text-right font-mono text-muted-foreground">{item.percentage.toFixed(1)}%</TableCell>
+                    <TableCell className="text-right font-bold font-mono text-primary">
+                      {item.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Card: Relatório Financeiro por Dia */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-start justify-between">
             <div className="flex-grow">
@@ -149,6 +231,7 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
         
+        {/* Card: Anotações em Aberto */}
         <Card>
           <CardHeader className="flex flex-row items-start justify-between">
             <div className="flex-grow">
@@ -196,6 +279,7 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
 
+        {/* Card: Relatório de Itens Vendidos */}
         <Card>
           <CardHeader className="flex flex-row items-start justify-between">
             <div className="flex-grow">

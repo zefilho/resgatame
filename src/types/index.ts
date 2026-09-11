@@ -3,9 +3,17 @@ import type { Timestamp } from 'firebase/firestore';
 
 export type ItemCategory = 
   | 'Lanchonete'
+  | 'Lojinha - Juventude'
   | 'Lojinha - Juventure'
   | 'Lojinha - Santos Anjos'
   | 'Lojinha - Apresentação';
+
+export interface TagSaleSummary {
+  tag: string;
+  totalAmount: number;
+  totalQuantity: number;
+  percentage: number;
+}
 
 export interface MenuItem {
   id: string;
