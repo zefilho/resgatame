@@ -1,14 +1,16 @@
 "use client";
 
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSales } from "@/contexts/SalesContext";
 import { useAnnotations } from "@/contexts/AnnotationsContext";
 import { useCustomers } from "@/contexts/CustomersContext";
-import { Download, Package, Tag, CalendarClock, DollarSign, TrendingUp, CheckCircle2, Clock } from "lucide-react";
+import { Download, Package, Tag, CalendarClock, DollarSign, TrendingUp, CheckCircle2, Clock, Search, X } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from '@/components/ui/badge';
@@ -19,11 +21,63 @@ export default function ReportsPage() {
   const { getCustomerById } = useCustomers();
   const { toast } = useToast();
 
+  // Filter states for Agenda Detalhada de Parcelas
+  const [receivablesSearchQuery, setReceivablesSearchQuery] = useState<string>('');
+  const [receivablesDateFilter, setReceivablesDateFilter] = useState<string>('');
+  const [receivablesStatusFilter, setReceivablesStatusFilter] = useState<string>('all');
+
   const financialSummary = useMemo(() => getDailyFinancialSummary(), [getDailyFinancialSummary]);
   const itemSalesSummary = useMemo(() => getFullItemSalesSummary(), [getFullItemSalesSummary]);
   const tagSalesSummary = useMemo(() => getTagSalesSummary(), [getTagSalesSummary]);
   const receivablesOverview = useMemo(() => getReceivablesOverview(), [getReceivablesOverview]);
   const openAnnotations = useMemo(() => annotations.filter(a => a.status === 'open'), [annotations]);
+
+  const filteredReceivablesList = useMemo(() => {
+    return receivablesOverview.receivablesList.filter((item) => {
+      // 1. Text search filter
+      if (receivablesSearchQuery.trim()) {
+        const q = receivablesSearchQuery.toLowerCase();
+        const saleDateStr = item.saleDate.toLocaleDateString('pt-BR');
+        const depositDateStr = item.expectedDepositDate.toLocaleDateString('pt-BR');
+        const methodStr = item.paymentMethod.toLowerCase();
+        const labelStr = item.installmentLabel.toLowerCase();
+        const statusStr = item.status.toLowerCase();
+        const amountStr = item.amount.toFixed(2);
+
+        const matchesText =
+          saleDateStr.includes(q) ||
+          depositDateStr.includes(q) ||
+          methodStr.includes(q) ||
+          labelStr.includes(q) ||
+          statusStr.includes(q) ||
+          amountStr.includes(q);
+
+        if (!matchesText) return false;
+      }
+
+      // 2. Specific Date filter (yyyy-mm-dd from <input type="date">)
+      if (receivablesDateFilter) {
+        const itemDepositYmd = item.expectedDepositDate.toISOString().slice(0, 10);
+        const itemSaleYmd = item.saleDate.toISOString().slice(0, 10);
+        if (itemDepositYmd !== receivablesDateFilter && itemSaleYmd !== receivablesDateFilter) {
+          return false;
+        }
+      }
+
+      // 3. Status filter
+      if (receivablesStatusFilter !== 'all') {
+        if (item.status !== receivablesStatusFilter) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [receivablesOverview.receivablesList, receivablesSearchQuery, receivablesDateFilter, receivablesStatusFilter]);
+
+  const filteredTotalAmount = useMemo(() => {
+    return filteredReceivablesList.reduce((sum, item) => sum + item.amount, 0);
+  }, [filteredReceivablesList]);
 
   const downloadCSV = (data: any[], filename: string) => {
     if (data.length === 0) {
@@ -58,7 +112,7 @@ export default function ReportsPage() {
   };
 
   const handleExportReceivablesReport = () => {
-    const reportData = receivablesOverview.receivablesList.map(item => ({
+    const reportData = filteredReceivablesList.map(item => ({
       ID_Venda: item.transactionId.substring(0, 8),
       DataVenda: item.saleDate.toLocaleDateString('pt-BR'),
       FormaPagamento: item.paymentMethod,
@@ -135,7 +189,7 @@ export default function ReportsPage() {
                 Acompanhe quando as vendas (à vista, débito e parceladas no cartão) se converterão em dinheiro no caixa da loja.
               </CardDescription>
             </div>
-            <Button onClick={handleExportReceivablesReport} disabled={receivablesOverview.receivablesList.length === 0} className="ml-4 shrink-0">
+            <Button onClick={handleExportReceivablesReport} disabled={filteredReceivablesList.length === 0} className="ml-4 shrink-0">
               <Download className="mr-2 h-4 w-4" />
               Exportar .CSV
             </Button>
@@ -209,8 +263,75 @@ export default function ReportsPage() {
             )}
 
             {/* Tabela Detalhada de Recebíveis por Parcela */}
-            <div className="space-y-3">
-              <h3 className="text-base font-semibold">Agenda Detalhada de Parcelas</h3>
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
+                <h3 className="text-base font-semibold">Agenda Detalhada de Parcelas</h3>
+                <div className="text-xs text-muted-foreground font-mono">
+                  Exibindo <span className="font-bold text-foreground">{filteredReceivablesList.length}</span> de <span className="font-bold text-foreground">{receivablesOverview.receivablesList.length}</span> parcelas (Total: <span className="font-bold text-primary">{filteredTotalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>)
+                </div>
+              </div>
+
+              {/* Filtros da Agenda */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3 bg-muted/30 p-3 rounded-lg border">
+                <div className="relative col-span-1 md:col-span-2">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Filtrar por data (ex: 15/09), cartão, parcela ou valor..."
+                    value={receivablesSearchQuery}
+                    onChange={(e) => setReceivablesSearchQuery(e.target.value)}
+                    className="pl-8 text-xs sm:text-sm"
+                  />
+                  {receivablesSearchQuery && (
+                    <button
+                      onClick={() => setReceivablesSearchQuery('')}
+                      className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <Input
+                    type="date"
+                    value={receivablesDateFilter}
+                    onChange={(e) => setReceivablesDateFilter(e.target.value)}
+                    className="text-xs sm:text-sm"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Select value={receivablesStatusFilter} onValueChange={setReceivablesStatusFilter}>
+                    <SelectTrigger className="text-xs sm:text-sm w-full">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os Status</SelectItem>
+                      <SelectItem value="A Receber">A Receber</SelectItem>
+                      <SelectItem value="Recebido">Recebido</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {(receivablesSearchQuery || receivablesDateFilter || receivablesStatusFilter !== 'all') && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        setReceivablesSearchQuery('');
+                        setReceivablesDateFilter('');
+                        setReceivablesStatusFilter('all');
+                      }}
+                      title="Limpar Filtros"
+                      className="shrink-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Tabela de Resultados */}
               <ScrollArea className="h-72 border rounded-md">
                 <Table>
                   <TableHeader>
@@ -224,14 +345,14 @@ export default function ReportsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {receivablesOverview.receivablesList.length === 0 ? (
+                    {filteredReceivablesList.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
-                          Nenhum recebível registrado.
+                          Nenhuma parcela encontrada com os filtros selecionados.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      receivablesOverview.receivablesList.map((item) => (
+                      filteredReceivablesList.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell className="font-mono text-xs">
                             {item.saleDate.toLocaleDateString('pt-BR')}
