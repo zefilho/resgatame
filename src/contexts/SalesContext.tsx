@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Transaction, OrderItem, TagSaleSummary } from '@/types';
+import type { Transaction, OrderItem, TagSaleSummary, ReceivablesOverview, ReceivableItem, MonthlyReceivableSummary } from '@/types';
 import { ConcreteOrderItem } from '@/types';
 import React, { createContext, useContext, useCallback, useMemo, useState, useEffect } from 'react';
 import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from 'firebase/firestore';
@@ -45,6 +45,7 @@ interface SalesContextType {
   getDailyFinancialSummary: () => DailyFinancialSummary;
   getFullItemSalesSummary: () => ItemSaleSummary[];
   getTagSalesSummary: () => TagSaleSummary[];
+  getReceivablesOverview: () => ReceivablesOverview;
 }
 
 const SalesContext = createContext<SalesContextType | undefined>(undefined);
@@ -174,6 +175,146 @@ export const SalesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }));
   }, [transactions]);
 
+  const getReceivablesOverview = useCallback((): ReceivablesOverview => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const nowTime = today.getTime();
+    const in30DaysTime = nowTime + 30 * 24 * 60 * 60 * 1000;
+
+    let immediateRevenue = 0;
+    let upcoming30Days = 0;
+    let futureBeyond30Days = 0;
+    let totalFutureReceivables = 0;
+
+    const receivablesList: ReceivableItem[] = [];
+
+    transactions.forEach(txn => {
+      const saleDate = (txn.timestamp instanceof Date
+        ? txn.timestamp
+        : (txn.timestamp as any)?.toDate?.() || new Date(txn.timestamp as any));
+      
+      const method = txn.paymentMethod || 'Dinheiro';
+      const methodLower = method.toLowerCase();
+      const isCard = methodLower.includes('cartão') || methodLower.includes('cartao');
+      const isDebit = methodLower.includes('débito') || methodLower.includes('debito');
+
+      if (!isCard) {
+        // Dinheiro / PIX
+        immediateRevenue += txn.totalAmount;
+        receivablesList.push({
+          id: `${txn.id}-1`,
+          transactionId: txn.id,
+          saleDate,
+          paymentMethod: method,
+          installmentLabel: 'À Vista',
+          expectedDepositDate: saleDate,
+          amount: txn.totalAmount,
+          status: 'Recebido',
+        });
+        return;
+      }
+
+      if (isDebit) {
+        // Débito (D+1)
+        const depositDate = new Date(saleDate);
+        depositDate.setDate(depositDate.getDate() + 1);
+        const depTime = depositDate.getTime();
+
+        const status: 'Recebido' | 'A Receber' = depTime <= nowTime ? 'Recebido' : 'A Receber';
+        if (status === 'Recebido') {
+          immediateRevenue += txn.totalAmount;
+        } else if (depTime <= in30DaysTime) {
+          upcoming30Days += txn.totalAmount;
+          totalFutureReceivables += txn.totalAmount;
+        } else {
+          futureBeyond30Days += txn.totalAmount;
+          totalFutureReceivables += txn.totalAmount;
+        }
+
+        receivablesList.push({
+          id: `${txn.id}-1`,
+          transactionId: txn.id,
+          saleDate,
+          paymentMethod: method,
+          installmentLabel: 'Débito (1/1)',
+          expectedDepositDate: depositDate,
+          amount: txn.totalAmount,
+          status,
+        });
+        return;
+      }
+
+      // Crédito / Parcelado
+      const match = method.match(/(\d+)\s*x/i);
+      const numInstallments = match ? parseInt(match[1], 10) : 1;
+      const installmentAmount = Math.round((txn.totalAmount / numInstallments) * 100) / 100;
+
+      for (let i = 1; i <= numInstallments; i++) {
+        const depositDate = new Date(saleDate);
+        depositDate.setDate(depositDate.getDate() + 30 * i);
+        const depTime = depositDate.getTime();
+
+        const status: 'Recebido' | 'A Receber' = depTime <= nowTime ? 'Recebido' : 'A Receber';
+
+        if (status === 'Recebido') {
+          immediateRevenue += installmentAmount;
+        } else if (depTime <= in30DaysTime) {
+          upcoming30Days += installmentAmount;
+          totalFutureReceivables += installmentAmount;
+        } else {
+          futureBeyond30Days += installmentAmount;
+          totalFutureReceivables += installmentAmount;
+        }
+
+        receivablesList.push({
+          id: `${txn.id}-${i}`,
+          transactionId: txn.id,
+          saleDate,
+          paymentMethod: method,
+          installmentLabel: numInstallments > 1 ? `Parcela ${i}/${numInstallments}` : 'Crédito (1x)',
+          expectedDepositDate: depositDate,
+          amount: installmentAmount,
+          status,
+        });
+      }
+    });
+
+    // Grouping by Month/Year for Monthly Schedule
+    const monthlyMap: Record<string, { totalAmount: number; count: number; sortKey: string }> = {};
+
+    receivablesList.forEach(item => {
+      const monthYearStr = item.expectedDepositDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      const capitalizedMonth = monthYearStr.charAt(0).toUpperCase() + monthYearStr.slice(1);
+      const yyyymm = item.expectedDepositDate.toISOString().slice(0, 7);
+
+      if (!monthlyMap[capitalizedMonth]) {
+        monthlyMap[capitalizedMonth] = { totalAmount: 0, count: 0, sortKey: yyyymm };
+      }
+      monthlyMap[capitalizedMonth].totalAmount += item.amount;
+      monthlyMap[capitalizedMonth].count += 1;
+    });
+
+    const monthlySchedule: MonthlyReceivableSummary[] = Object.entries(monthlyMap)
+      .sort(([, a], [, b]) => a.sortKey.localeCompare(b.sortKey))
+      .map(([monthYear, data]) => ({
+        monthYear,
+        totalAmount: data.totalAmount,
+        count: data.count,
+      }));
+
+    // Sort receivables list by expected deposit date descending
+    receivablesList.sort((a, b) => b.expectedDepositDate.getTime() - a.expectedDepositDate.getTime());
+
+    return {
+      immediateRevenue,
+      upcoming30Days,
+      futureBeyond30Days,
+      totalFutureReceivables,
+      monthlySchedule,
+      receivablesList,
+    };
+  }, [transactions]);
+
   const getPaymentMethodSummaryForPeriod = useCallback((period: Period): PaymentMethodSummary[] => {
     const relevantTransactions = getTransactionsForPeriod(period);
     const summary: { [key: string]: number } = {};
@@ -217,11 +358,12 @@ export const SalesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     getPaymentMethodSummaryForPeriod, 
     getDailyFinancialSummary, 
     getFullItemSalesSummary,
-    getTagSalesSummary
+    getTagSalesSummary,
+    getReceivablesOverview
   }), [
     transactions, addTransaction, getStatsForPeriod, getTransactionsForPeriod, 
     getItemSalesSummaryForPeriod, getPaymentMethodSummaryForPeriod, getDailyFinancialSummary, getFullItemSalesSummary,
-    getTagSalesSummary
+    getTagSalesSummary, getReceivablesOverview
   ]);
 
   return (

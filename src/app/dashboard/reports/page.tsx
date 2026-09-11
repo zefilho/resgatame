@@ -8,13 +8,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSales } from "@/contexts/SalesContext";
 import { useAnnotations } from "@/contexts/AnnotationsContext";
 import { useCustomers } from "@/contexts/CustomersContext";
-import { Download, Package, Tag } from "lucide-react";
+import { Download, Package, Tag, CalendarClock, DollarSign, TrendingUp, CheckCircle2, Clock } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from '@/components/ui/badge';
 
 export default function ReportsPage() {
-  const { getDailyFinancialSummary, getFullItemSalesSummary, getTagSalesSummary } = useSales();
+  const { getDailyFinancialSummary, getFullItemSalesSummary, getTagSalesSummary, getReceivablesOverview } = useSales();
   const { annotations } = useAnnotations();
   const { getCustomerById } = useCustomers();
   const { toast } = useToast();
@@ -22,6 +22,7 @@ export default function ReportsPage() {
   const financialSummary = useMemo(() => getDailyFinancialSummary(), [getDailyFinancialSummary]);
   const itemSalesSummary = useMemo(() => getFullItemSalesSummary(), [getFullItemSalesSummary]);
   const tagSalesSummary = useMemo(() => getTagSalesSummary(), [getTagSalesSummary]);
+  const receivablesOverview = useMemo(() => getReceivablesOverview(), [getReceivablesOverview]);
   const openAnnotations = useMemo(() => annotations.filter(a => a.status === 'open'), [annotations]);
 
   const downloadCSV = (data: any[], filename: string) => {
@@ -54,6 +55,19 @@ export default function ReportsPage() {
       title: "Exportação Concluída",
       description: `O arquivo ${filename} foi baixado.`,
     });
+  };
+
+  const handleExportReceivablesReport = () => {
+    const reportData = receivablesOverview.receivablesList.map(item => ({
+      ID_Venda: item.transactionId.substring(0, 8),
+      DataVenda: item.saleDate.toLocaleDateString('pt-BR'),
+      FormaPagamento: item.paymentMethod,
+      Parcela: item.installmentLabel,
+      PrevisaoEntradaCaixa: item.expectedDepositDate.toLocaleDateString('pt-BR'),
+      ValorParcela: item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+      Status: item.status,
+    }));
+    downloadCSV(reportData, 'relatorio-controle-recebiveis.csv');
   };
 
   const handleExportFinancialReport = () => {
@@ -105,10 +119,156 @@ export default function ReportsPage() {
     <div className="flex flex-col gap-6">
       <header>
         <h1 className="text-3xl font-headline font-semibold">Relatórios e Exportações</h1>
-        <p className="text-muted-foreground">Exporte dados financeiros, vendas por TAG, anotações em aberto e produtos vendidos.</p>
+        <p className="text-muted-foreground">Acompanhe a projeção de recebíveis, vendas por TAG, entradas financeiras e exportações.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* Card: Controle de Recebíveis (Parcelamentos & Entrada no Caixa) */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-start justify-between">
+            <div className="flex-grow">
+              <CardTitle className="flex items-center gap-2 text-xl font-headline">
+                <CalendarClock className="h-6 w-6 text-primary" />
+                Controle de Recebíveis & Previsão de Caixa
+              </CardTitle>
+              <CardDescription>
+                Acompanhe quando as vendas (à vista, débito e parceladas no cartão) se converterão em dinheiro no caixa da loja.
+              </CardDescription>
+            </div>
+            <Button onClick={handleExportReceivablesReport} disabled={receivablesOverview.receivablesList.length === 0} className="ml-4 shrink-0">
+              <Download className="mr-2 h-4 w-4" />
+              Exportar .CSV
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* KPI Cards de Recebíveis */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-4 rounded-lg border bg-card space-y-1 shadow-sm">
+                <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+                  <span>Caixa Imediato (D+0 / D+1)</span>
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                </div>
+                <div className="text-2xl font-bold font-mono text-green-600">
+                  {receivablesOverview.immediateRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </div>
+                <p className="text-[11px] text-muted-foreground">Dinheiro, PIX e Débitos já liberados</p>
+              </div>
+
+              <div className="p-4 rounded-lg border bg-card space-y-1 shadow-sm">
+                <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+                  <span>A Receber em 30 Dias</span>
+                  <Clock className="h-4 w-4 text-amber-600" />
+                </div>
+                <div className="text-2xl font-bold font-mono text-amber-600">
+                  {receivablesOverview.upcoming30Days.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </div>
+                <p className="text-[11px] text-muted-foreground">Parcelas/Crédito para o mês atual</p>
+              </div>
+
+              <div className="p-4 rounded-lg border bg-card space-y-1 shadow-sm">
+                <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+                  <span>Futuro (&gt; 30 Dias)</span>
+                  <TrendingUp className="h-4 w-4 text-blue-600" />
+                </div>
+                <div className="text-2xl font-bold font-mono text-blue-600">
+                  {receivablesOverview.futureBeyond30Days.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </div>
+                <p className="text-[11px] text-muted-foreground">Parcelas a cair em 60+ dias</p>
+              </div>
+
+              <div className="p-4 rounded-lg border bg-card space-y-1 shadow-sm bg-primary/5">
+                <div className="flex items-center justify-between text-xs text-primary font-semibold">
+                  <span>Total Futuro A Receber</span>
+                  <DollarSign className="h-4 w-4 text-primary" />
+                </div>
+                <div className="text-2xl font-extrabold font-mono text-primary">
+                  {receivablesOverview.totalFutureReceivables.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </div>
+                <p className="text-[11px] text-muted-foreground">Soma de todas as parcelas pendentes</p>
+              </div>
+            </div>
+
+            {/* Cronograma Mensal de Recebimento */}
+            {receivablesOverview.monthlySchedule.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-base font-semibold">Cronograma Mensal de Entradas no Caixa</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {receivablesOverview.monthlySchedule.map((m) => (
+                    <div key={m.monthYear} className="p-3 rounded-md border bg-muted/30 flex justify-between items-center text-sm">
+                      <div>
+                        <span className="font-semibold block">{m.monthYear}</span>
+                        <span className="text-xs text-muted-foreground">{m.count} parcela(s) / lançamentos</span>
+                      </div>
+                      <span className="font-bold font-mono text-primary text-base">
+                        {m.totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tabela Detalhada de Recebíveis por Parcela */}
+            <div className="space-y-3">
+              <h3 className="text-base font-semibold">Agenda Detalhada de Parcelas</h3>
+              <ScrollArea className="h-72 border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data da Venda</TableHead>
+                      <TableHead>Forma de Pagamento</TableHead>
+                      <TableHead>Parcela</TableHead>
+                      <TableHead>Previsão no Caixa</TableHead>
+                      <TableHead className="text-right">Valor da Parcela</TableHead>
+                      <TableHead className="text-center w-[120px]">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {receivablesOverview.receivablesList.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                          Nenhum recebível registrado.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      receivablesOverview.receivablesList.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-mono text-xs">
+                            {item.saleDate.toLocaleDateString('pt-BR')}
+                          </TableCell>
+                          <TableCell className="font-medium text-xs">
+                            {item.paymentMethod}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">
+                            <Badge variant="outline">{item.installmentLabel}</Badge>
+                          </TableCell>
+                          <TableCell className="font-mono text-xs font-semibold">
+                            {item.expectedDepositDate.toLocaleDateString('pt-BR')}
+                          </TableCell>
+                          <TableCell className="text-right font-mono font-bold text-sm">
+                            {item.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {item.status === 'Recebido' ? (
+                              <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300">
+                                Recebido
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                                A Receber
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Card: Vendas por TAG / Categoria */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-start justify-between">

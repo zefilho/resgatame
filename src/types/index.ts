@@ -82,3 +82,30 @@ export interface Transaction {
   annotationId?: string;
   paymentMethod?: string;
 }
+
+export interface ReceivableItem {
+  id: string;
+  transactionId: string;
+  saleDate: Date;
+  paymentMethod: string;
+  installmentLabel: string;
+  expectedDepositDate: Date;
+  amount: number;
+  status: 'Recebido' | 'A Receber';
+}
+
+export interface MonthlyReceivableSummary {
+  monthYear: string;
+  totalAmount: number;
+  count: number;
+}
+
+export interface ReceivablesOverview {
+  immediateRevenue: number;
+  upcoming30Days: number;
+  futureBeyond30Days: number;
+  totalFutureReceivables: number;
+  monthlySchedule: MonthlyReceivableSummary[];
+  receivablesList: ReceivableItem[];
+}
+
