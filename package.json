@@ -11,7 +11,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "db:reset": "npx tsx scripts/reset-db.ts",
-    "db:seed-servos": "npx tsx scripts/seed-servos.ts"
+    "db:seed-servos": "npx tsx scripts/seed-servos.ts",
+    "db:seed-cursistas": "npx tsx scripts/seed-cursistas.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.8.0",
