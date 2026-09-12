@@ -14,7 +14,8 @@
     "db:seed-servos": "npx tsx scripts/seed-servos.ts",
     "db:seed-cursistas": "npx tsx scripts/seed-cursistas.ts",
     "db:seed-lanchonete": "npx tsx scripts/seed-lanchonete.ts",
-    "db:seed-juventude": "npx tsx scripts/seed-juventude.ts"
+    "db:seed-juventude": "npx tsx scripts/seed-juventude.ts",
+    "db:seed-apresentacao": "npx tsx scripts/seed-apresentacao.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.8.0",
