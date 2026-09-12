@@ -153,10 +153,7 @@ export const SalesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     transactions.forEach(txn => {
       txn.items.forEach(item => {
-        let tag = item.menuItem?.category || 'Lanchonete';
-        if (tag === ('Lojinha - Juventure' as any)) {
-          tag = 'Lojinha - Juventude';
-        }
+        const tag = item.menuItem?.category || 'Lanchonete';
         if (!summary[tag]) {
           summary[tag] = { totalAmount: 0, totalQuantity: 0 };
         }

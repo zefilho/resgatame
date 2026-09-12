@@ -4,7 +4,6 @@ import type { Timestamp } from 'firebase/firestore';
 export type ItemCategory = 
   | 'Lanchonete'
   | 'Lojinha - Juventude'
-  | 'Lojinha - Juventure'
   | 'Lojinha - Santos Anjos'
   | 'Lojinha - Apresentação';
 

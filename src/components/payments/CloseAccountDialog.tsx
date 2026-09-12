@@ -274,7 +274,7 @@ export function CloseAccountDialog({
                 <Button
                   type="button"
                   onClick={handleAddSplit}
-                  disabled={splitAmount <= 0 || (splitMethod === 'Cartao' && splitCardSimulation && !splitCardSimulation.isValid)}
+                  disabled={Boolean(splitAmount <= 0 || (splitMethod === 'Cartao' && splitCardSimulation && !splitCardSimulation.isValid))}
                   className="w-full gap-2 mt-2"
                 >
                   <Plus className="h-4 w-4" />
