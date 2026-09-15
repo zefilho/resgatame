@@ -12,6 +12,8 @@ export type Period = 'today' | 'last20days';
 
 interface SalesStats {
   revenue: number;
+  totalSalesAmount: number;
+  cashRevenue: number;
   totalOrders: number;
   averageOrderValue: number;
 }
@@ -107,71 +109,6 @@ export const SalesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return transactions.filter(txn => (txn.timestamp instanceof Date ? txn.timestamp : (txn.timestamp as any).toDate?.() || new Date(txn.timestamp as any)) >= startDate);
   }, [transactions]);
   
-  const getStatsForPeriod = useCallback((period: Period): SalesStats => {
-    const relevantTransactions = getTransactionsForPeriod(period);
-    const revenue = relevantTransactions.reduce((sum, txn) => sum + txn.totalAmount, 0);
-    const totalOrders = relevantTransactions.length;
-    const averageOrderValue = totalOrders > 0 ? revenue / totalOrders : 0;
-    return { revenue, totalOrders, averageOrderValue };
-  }, [getTransactionsForPeriod]);
-  
-  const getItemSalesSummaryForPeriod = useCallback((period: Period): ItemSaleSummary[] => {
-    const relevantTransactions = getTransactionsForPeriod(period);
-    const summary: { [key: string]: number } = {};
-
-    relevantTransactions.forEach(txn => {
-      txn.items.forEach(item => {
-        summary[item.menuItem.name] = (summary[item.menuItem.name] || 0) + item.quantity;
-      });
-    });
-
-    return Object.entries(summary)
-      .map(([name, quantity]) => ({ name, quantity }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [getTransactionsForPeriod]);
-
-  const getFullItemSalesSummary = useCallback((): ItemSaleSummary[] => {
-    const summary: { [key: string]: number } = {};
-    transactions.forEach(txn => {
-      txn.items.forEach(item => {
-        summary[item.menuItem.name] = (summary[item.menuItem.name] || 0) + item.quantity;
-      });
-    });
-
-    return Object.entries(summary)
-      .map(([name, quantity]) => ({ name, quantity }))
-      .sort((a, b) => b.quantity - a.quantity);
-  }, [transactions]);
-
-  const getTagSalesSummary = useCallback((): TagSaleSummary[] => {
-    const summary: Record<string, { totalAmount: number; totalQuantity: number }> = {
-      'Lanchonete': { totalAmount: 0, totalQuantity: 0 },
-      'Lojinha - Juventude': { totalAmount: 0, totalQuantity: 0 },
-      'Lojinha - Santos Anjos': { totalAmount: 0, totalQuantity: 0 },
-      'Lojinha - Apresentação': { totalAmount: 0, totalQuantity: 0 },
-    };
-
-    transactions.forEach(txn => {
-      txn.items.forEach(item => {
-        const tag = item.menuItem?.category || 'Lanchonete';
-        if (!summary[tag]) {
-          summary[tag] = { totalAmount: 0, totalQuantity: 0 };
-        }
-        summary[tag].totalAmount += item.totalPrice;
-        summary[tag].totalQuantity += item.quantity;
-      });
-    });
-
-    const grandTotal = Object.values(summary).reduce((sum, item) => sum + item.totalAmount, 0);
-
-    return Object.entries(summary).map(([tag, data]) => ({
-      tag,
-      totalAmount: data.totalAmount,
-      totalQuantity: data.totalQuantity,
-      percentage: grandTotal > 0 ? (data.totalAmount / grandTotal) * 100 : 0,
-    }));
-  }, [transactions]);
-
   const getReceivablesOverview = useCallback((): ReceivablesOverview => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -311,6 +248,99 @@ export const SalesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       receivablesList,
     };
   }, [transactions]);
+
+  const getStatsForPeriod = useCallback((period: Period): SalesStats => {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    startDate.setHours(0, 0, 0, 0);
+
+    if (period === 'last20days') {
+      startDate.setDate(startDate.getDate() - 19);
+    }
+
+    const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    const relevantTransactions = transactions.filter(txn => {
+      const txnDate = (txn.timestamp instanceof Date ? txn.timestamp : (txn.timestamp as any)?.toDate?.() || new Date(txn.timestamp as any));
+      return txnDate >= startDate;
+    });
+
+    const totalSalesAmount = relevantTransactions.reduce((sum, txn) => sum + txn.totalAmount, 0);
+    const totalOrders = relevantTransactions.length;
+    const averageOrderValue = totalOrders > 0 ? totalSalesAmount / totalOrders : 0;
+
+    const { receivablesList } = getReceivablesOverview();
+    const cashRevenue = receivablesList
+      .filter(item => item.expectedDepositDate >= startDate && item.expectedDepositDate <= endDate)
+      .reduce((sum, item) => sum + item.amount, 0);
+
+    return { 
+      revenue: totalSalesAmount, 
+      totalSalesAmount,
+      cashRevenue,
+      totalOrders, 
+      averageOrderValue 
+    };
+  }, [transactions, getReceivablesOverview]);
+  
+  const getItemSalesSummaryForPeriod = useCallback((period: Period): ItemSaleSummary[] => {
+    const relevantTransactions = getTransactionsForPeriod(period);
+    const summary: { [key: string]: number } = {};
+
+    relevantTransactions.forEach(txn => {
+      txn.items.forEach(item => {
+        summary[item.menuItem.name] = (summary[item.menuItem.name] || 0) + item.quantity;
+      });
+    });
+
+    return Object.entries(summary)
+      .map(([name, quantity]) => ({ name, quantity }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [getTransactionsForPeriod]);
+
+  const getFullItemSalesSummary = useCallback((): ItemSaleSummary[] => {
+    const summary: { [key: string]: number } = {};
+    transactions.forEach(txn => {
+      txn.items.forEach(item => {
+        summary[item.menuItem.name] = (summary[item.menuItem.name] || 0) + item.quantity;
+      });
+    });
+
+    return Object.entries(summary)
+      .map(([name, quantity]) => ({ name, quantity }))
+      .sort((a, b) => b.quantity - a.quantity);
+  }, [transactions]);
+
+  const getTagSalesSummary = useCallback((): TagSaleSummary[] => {
+    const summary: Record<string, { totalAmount: number; totalQuantity: number }> = {
+      'Lanchonete': { totalAmount: 0, totalQuantity: 0 },
+      'Lojinha - Juventude': { totalAmount: 0, totalQuantity: 0 },
+      'Lojinha - Santos Anjos': { totalAmount: 0, totalQuantity: 0 },
+      'Lojinha - Apresentação': { totalAmount: 0, totalQuantity: 0 },
+    };
+
+    transactions.forEach(txn => {
+      txn.items.forEach(item => {
+        const tag = item.menuItem?.category || 'Lanchonete';
+        if (!summary[tag]) {
+          summary[tag] = { totalAmount: 0, totalQuantity: 0 };
+        }
+        summary[tag].totalAmount += item.totalPrice;
+        summary[tag].totalQuantity += item.quantity;
+      });
+    });
+
+    const grandTotal = Object.values(summary).reduce((sum, item) => sum + item.totalAmount, 0);
+
+    return Object.entries(summary).map(([tag, data]) => ({
+      tag,
+      totalAmount: data.totalAmount,
+      totalQuantity: data.totalQuantity,
+      percentage: grandTotal > 0 ? (data.totalAmount / grandTotal) * 100 : 0,
+    }));
+  }, [transactions]);
+
+
 
   const getPaymentMethodSummaryForPeriod = useCallback((period: Period): PaymentMethodSummary[] => {
     const relevantTransactions = getTransactionsForPeriod(period);

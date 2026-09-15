@@ -15,7 +15,7 @@ export default function DashboardOverviewPage() {
   const [period, setPeriod] = useState<Period>('today');
   const { getStatsForPeriod, getItemSalesSummaryForPeriod, getPaymentMethodSummaryForPeriod } = useSales();
 
-  const { revenue, totalOrders, averageOrderValue } = getStatsForPeriod(period);
+  const { totalSalesAmount, cashRevenue, totalOrders, averageOrderValue } = getStatsForPeriod(period);
   const itemSummary = getItemSalesSummaryForPeriod(period);
   const paymentSummary = getPaymentMethodSummaryForPeriod(period);
   
@@ -39,24 +39,30 @@ export default function DashboardOverviewPage() {
         </TabsList>
         
         <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 col-span-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 col-span-3">
             <StatCard
-              title="Receita no Período"
-              value={revenue}
+              title="Vendas Realizadas"
+              value={totalSalesAmount}
+              icon={ShoppingBag}
+              description={`Valor total bruto vendido: ${periodLabel}.`}
+            />
+            <StatCard
+              title="Receita em Caixa"
+              value={cashRevenue}
               icon={DollarSign}
-              description={`Total de vendas para: ${periodLabel}.`}
+              description={`Entradas liberadas em caixa: ${periodLabel}.`}
             />
             <StatCard
               title="Total de Pedidos"
               value={totalOrders}
-              icon={ShoppingBag}
-              description={`Número de pedidos para: ${periodLabel}.`}
+              icon={BarChartBig}
+              description={`Número de pedidos: ${periodLabel}.`}
             />
             <StatCard
               title="Valor Médio por Pedido"
               value={averageOrderValue}
-              icon={BarChartBig}
-              description={`Valor médio de pedido para: ${periodLabel}.`}
+              icon={CreditCard}
+              description={`Valor médio por pedido: ${periodLabel}.`}
             />
           </div>
           
